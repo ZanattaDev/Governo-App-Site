@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ConectaGov Brasil</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#inicio" aria-label="ConectaGov Brasil">
+        <span class="brand-mark">CG</span>
+        <span>
+          <strong>ConectaGov</strong>
+          <small>Brasil</small>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="Navegacao principal">
+        <a href="#servicos">Servicos</a>
+        <a href="#cnpj">CNPJ</a>
+        <a href="#cep">CEP</a>
+        <a href="#documentos">Documentos</a>
+        <a href="#integracoes">Integracoes</a>
+        <a href="#modelo">Modelo</a>
+      </nav>
+
+      <button class="login-button" id="openLogin" type="button">Entrar com CPF</button>
+    </header>
+
+    <main>
+      <section id="inicio" class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Projeto de TCC - governo digital integrado</p>
+          <h1>Todos os servicos publicos em uma unica experiencia simples.</h1>
+          <p>
+            Um prototipo de portal e aplicativo que centraliza CNPJ, CNH, SUS,
+            Imposto de Renda, CLT, beneficios, escolaridade e outros registros
+            do cidadao com seguranca, transparencia e consentimento.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#servicos">Ver painel</a>
+            <a class="secondary-action" href="#cnpj">Consultar CNPJ</a>
+          </div>
+          <div class="live-strip" id="liveStrip">
+            Backend aguardando login para sincronizacao em tempo real.
+          </div>
+        </div>
+
+        <aside class="phone-preview" aria-label="Previa do aplicativo">
+          <div class="phone-status">
+            <span>9:41</span>
+            <span>4G</span>
+          </div>
+          <div class="wallet-card">
+            <span>Identidade digital</span>
+            <strong>Pedro Henrique</strong>
+            <small>CPF protegido por autenticacao gov.br</small>
+          </div>
+          <div class="mini-grid">
+            <span>CNH</span>
+            <span>SUS</span>
+            <span>CLT</span>
+            <span>IRPF</span>
+          </div>
+          <div class="alert-line">3 servicos exigem atualizacao cadastral</div>
+        </aside>
+      </section>
+
+      <section class="login-panel" id="loginPanel" aria-label="Login por CPF">
+        <form class="login-card" id="loginForm">
+          <div>
+            <p class="eyebrow">Acesso seguro</p>
+            <h2 id="authTitle">Login com CPF</h2>
+            <p>
+              Cadastre um CPF real no banco do projeto ou use o usuario demo:
+              <strong>123.456.789-09</strong> / <strong>123456</strong>. Dados oficiais
+              sensiveis exigem login gov.br e integracoes autorizadas.
+            </p>
+          </div>
+          <div class="auth-switch" role="tablist" aria-label="Modo de acesso">
+            <button class="active" id="loginModeButton" type="button">Entrar</button>
+            <button id="registerModeButton" type="button">Cadastrar CPF</button>
+          </div>
+          <label class="register-only" for="fullNameInput">Nome completo</label>
+          <input class="register-only" id="fullNameInput" name="fullName" placeholder="Seu nome completo" />
+          <label class="register-only" for="emailInput">E-mail</label>
+          <input class="register-only" id="emailInput" name="email" type="email" placeholder="voce@email.com" />
+          <label for="cpfInput">CPF</label>
+          <input id="cpfInput" name="cpf" inputmode="numeric" placeholder="000.000.000-00" required />
+          <label for="passwordInput">Senha</label>
+          <input id="passwordInput" name="password" type="password" placeholder="Digite sua senha" required />
+          <button id="authSubmit" type="submit">Acessar painel</button>
+          <span id="loginMessage" class="form-message"></span>
+        </form>
+
+        <aside class="account-card" id="accountCard">
+          <span class="muted">Sessao</span>
+          <strong>Nenhum cidadao autenticado</strong>
+          <p>Entre com CPF para carregar dados pessoais, registros e atualizacoes ao vivo do banco.</p>
+        </aside>
+      </section>
+
+      <section class="metrics" aria-label="Indicadores do projeto">
+        <article>
+          <strong>12+</strong>
+          <span>areas de servico reunidas</span>
+        </article>
+        <article>
+          <strong>1</strong>
+          <span>login central com autorizacao</span>
+        </article>
+        <article>
+          <strong>24h</strong>
+          <span>acesso digital para consultas</span>
+        </article>
+      </section>
+
+      <section id="servicos" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Painel principal</p>
+          <h2>Servicos essenciais em um so lugar</h2>
+        </div>
+
+        <div class="dashboard">
+          <aside class="sidebar" aria-label="Categorias">
+            <button class="tab active" type="button" data-category="todos">Todos</button>
+            <button class="tab" type="button" data-category="documentos">Documentos</button>
+            <button class="tab" type="button" data-category="saude">Saude</button>
+            <button class="tab" type="button" data-category="trabalho">Trabalho</button>
+            <button class="tab" type="button" data-category="impostos">Impostos</button>
+            <button class="tab" type="button" data-category="empresa">Empresa</button>
+            <button class="tab" type="button" data-category="moradia">Moradia</button>
+            <button class="tab" type="button" data-category="beneficios">Beneficios</button>
+            <button class="tab" type="button" data-category="juridico">Juridico</button>
+          </aside>
+
+          <div class="service-grid" id="serviceGrid" aria-live="polite"></div>
+        </div>
+
+        <div class="service-workspace" id="serviceWorkspace">
+          <span class="muted">Nenhum servico aberto</span>
+          <h3>Escolha um servico no painel</h3>
+          <p>Cada cartao abre uma acao: consulta publica real, registros do banco ou conector oficial preparado.</p>
+        </div>
+      </section>
+
+      <section id="cnpj" class="section split-section">
+        <div>
+          <p class="eyebrow">Receita Federal e bases publicas</p>
+          <h2>Consulta de CNPJ preparada para integracao</h2>
+
+          <p class="section-text">
+            Em producao, a consulta deve usar autorizacao oficial, logs de
+
+            consentimento e conexao segura com a Receita Federal ou bases
+            publicas autorizadas. Neste prototipo, o backend consulta uma API
+            publica real de CNPJ quando disponivel e salva o retorno no MySQL.
+          </p>
+        </div>
+
+        <form class="cnpj-card" id="cnpjForm">
+          <label for="cnpjInput">CNPJ</label>
+          <div class="input-row">
+            <input id="cnpjInput" name="cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" />
+            <button type="submit">Consultar</button>
+          </div>
+          <div class="result" id="cnpjResult">
+            Digite um CNPJ para visualizar os dados cadastrais.
+          </div>
+        </form>
+      </section>
+
+      <section id="cep" class="section split-section">
+        <div>
+          <p class="eyebrow">Dados de endereços (tempo real)</p>
+          <h2>Consulta de CEP com cache local</h2>
+          <p class="section-text">
+            Este prototipo consulta uma base pública de CEP e salva no seu MySQL para reduzir latência.
+            O sistema indica se a resposta veio do cache ou da origem.
+          </p>
+        </div>
+
+        <form class="cnpj-card" id="cepForm">
+          <label for="cepInput">CEP</label>
+          <div class="input-row">
+            <input id="cepInput" name="cep" inputmode="numeric" placeholder="00000-000" />
+            <button type="submit">Consultar</button>
+          </div>
+          <div class="result" id="cepResult">Digite um CEP para visualizar o endereço.</div>
+        </form>
+      </section>
+
+      <section id="documentos" class="section">
+
+        <div class="section-heading">
+          <p class="eyebrow">Carteira digital</p>
+          <h2>Documentos e registros do cidadao</h2>
+        </div>
+
+        <div class="records" id="recordsGrid">
+          <article>
+            <span class="record-icon">CPF</span>
+            <h3>Aguardando login</h3>
+            <p>Os documentos pessoais serao carregados do banco apos autenticacao.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="integracoes" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">APIs reais e convenios oficiais</p>
+          <h2>Mapa profissional de integracoes</h2>
+          <p class="section-text">
+            CNPJ e CEP usam APIs publicas reais no prototipo. Dados pessoais como SUS,
+            CNH, CLT, seguro-desemprego e titulo de eleitor ficam modelados como
+            conectores oficiais, porque dependem de autorizacao, gov.br, LGPD e
+            consentimento do titular.
+          </p>
+        </div>
+
+        <div class="integration-grid" id="integrationGrid"></div>
+      </section>
+
+      <section id="modelo" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Referencias internacionais</p>
+          <h2>Modelo inspirado no Brasil e em boas praticas externas</h2>
+        </div>
+
+        <div class="model-grid">
+          <article>
+            <h3>Brasil</h3>
+            <p>Base no gov.br, login unico, carteira digital e integracao entre orgaos.</p>
+          </article>
+          <article>
+            <h3>Estonia</h3>
+            <p>Interoperabilidade, consentimento rastreavel e troca segura de dados.</p>
+          </article>
+          <article>
+            <h3>Reino Unido</h3>
+            <p>Servicos organizados por eventos da vida e linguagem simples.</p>
+          </article>
+          <article>
+            <h3>Portugal</h3>
+            <p>Documento digital, area pessoal e atendimento omnicanal.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <strong>ConectaGov Brasil</strong>
+      <span>Prototipo academico. Nao substitui sistemas oficiais do governo.</span>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
