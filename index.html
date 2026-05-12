@@ -6,7 +6,7 @@
     <title>ConectaGov Brasil</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="auth-only">
     <header class="topbar">
       <a class="brand" href="#inicio" aria-label="ConectaGov Brasil">
         <span class="brand-mark">CG</span>
@@ -31,31 +31,31 @@
     <main>
       <section id="inicio" class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Projeto de TCC - governo digital integrado</p>
-          <h1>Todos os servicos publicos em uma unica experiencia simples.</h1>
+          <p class="eyebrow">Governo digital integrado</p>
+          <h1>Painel unico de servicos publicos.</h1>
           <p>
-            Um prototipo de portal e aplicativo que centraliza CNPJ, CNH, SUS,
-            Imposto de Renda, CLT, beneficios, escolaridade e outros registros
-            do cidadao com seguranca, transparencia e consentimento.
+            Consulte documentos, beneficios, tributos e bases publicas em uma
+            experiencia unica, com login por CPF e dados organizados por servico.
           </p>
           <div class="hero-actions">
             <a class="primary-action" href="#servicos">Ver painel</a>
-            <a class="secondary-action" href="#cnpj">Consultar CNPJ</a>
+            <a class="secondary-action" href="#documentos">Meus documentos</a>
           </div>
           <div class="live-strip" id="liveStrip">
             Backend aguardando login para sincronizacao em tempo real.
           </div>
         </div>
 
-        <aside class="phone-preview" aria-label="Previa do aplicativo">
-          <div class="phone-status">
-            <span>9:41</span>
-            <span>4G</span>
-          </div>
+        <aside class="overview-panel" aria-label="Resumo do portal">
           <div class="wallet-card">
-            <span>Identidade digital</span>
+            <span>Conta autenticada</span>
             <strong>Pedro Henrique</strong>
-            <small>CPF protegido por autenticacao gov.br</small>
+            <small>CPF protegido por autenticacao e trilha de auditoria</small>
+          </div>
+          <div class="summary-list">
+            <div><strong>16</strong><span>servicos catalogados</span></div>
+            <div><strong>8</strong><span>registros do cidadao</span></div>
+            <div><strong>2</strong><span>APIs publicas ativas</span></div>
           </div>
           <div class="mini-grid">
             <span>CNH</span>
@@ -63,7 +63,7 @@
             <span>CLT</span>
             <span>IRPF</span>
           </div>
-          <div class="alert-line">3 servicos exigem atualizacao cadastral</div>
+          <div class="alert-line">Conectores oficiais preparados para gov.br e LGPD</div>
         </aside>
       </section>
 
@@ -103,16 +103,16 @@
 
       <section class="metrics" aria-label="Indicadores do projeto">
         <article>
-          <strong>12+</strong>
-          <span>areas de servico reunidas</span>
+          <strong>Login CPF</strong>
+          <span>sessao segura</span>
         </article>
         <article>
-          <strong>1</strong>
-          <span>login central com autorizacao</span>
+          <strong>Tempo real</strong>
+          <span>eventos do servidor</span>
         </article>
         <article>
-          <strong>24h</strong>
-          <span>acesso digital para consultas</span>
+          <strong>MySQL</strong>
+          <span>dados persistidos</span>
         </article>
       </section>
 
@@ -212,10 +212,9 @@
           <p class="eyebrow">APIs reais e convenios oficiais</p>
           <h2>Mapa profissional de integracoes</h2>
           <p class="section-text">
-            CNPJ e CEP usam APIs publicas reais no prototipo. Dados pessoais como SUS,
-            CNH, CLT, seguro-desemprego e titulo de eleitor ficam modelados como
-            conectores oficiais, porque dependem de autorizacao, gov.br, LGPD e
-            consentimento do titular.
+            As consultas publicas ficam ativas no prototipo. Dados pessoais protegidos
+            ficam prontos para integracao oficial com gov.br, consentimento, auditoria,
+            controle de acesso e regras da LGPD.
           </p>
         </div>
 

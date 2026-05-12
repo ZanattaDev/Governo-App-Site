@@ -120,14 +120,14 @@ ON DUPLICATE KEY UPDATE
 
 INSERT INTO official_integrations (service_key, agency, data_scope, access_model, public_api_available, status)
 VALUES
-  ('cnpj', 'Receita Federal / bases publicas espelhadas', 'Dados cadastrais publicos de pessoa juridica', 'APIs publicas BrasilAPI e ReceitaWS no prototipo; API oficial mediante autorizacao em producao', TRUE, 'Operacional no prototipo'),
-  ('cep', 'Correios / ViaCEP', 'Endereco publico por CEP', 'Consulta publica sem dados pessoais', TRUE, 'Operacional no prototipo'),
-  ('sus', 'Ministerio da Saude / Conecte SUS', 'Vacinas, consultas, medicamentos e cartao SUS', 'Requer gov.br, consentimento e API autorizada', FALSE, 'Requer convenio'),
-  ('cnh', 'SENATRAN / DETRANs', 'CNH, pontuacao, multas e validade', 'Requer autenticacao forte e integracao oficial', FALSE, 'Requer convenio'),
-  ('clt', 'Ministerio do Trabalho / Carteira de Trabalho Digital', 'Contratos, vinculos, salarios e beneficios trabalhistas', 'Requer gov.br e autorizacao do titular', FALSE, 'Requer convenio'),
-  ('seguro_desemprego', 'Ministerio do Trabalho', 'Solicitacoes, parcelas e situacao do seguro-desemprego', 'Requer gov.br e API oficial', FALSE, 'Requer convenio'),
-  ('titulo_eleitor', 'Tribunal Superior Eleitoral', 'Situacao eleitoral, zona, secao e quitacao', 'Requer API oficial/autorizada e validacao do eleitor', FALSE, 'Requer convenio'),
-  ('habitacao', 'Ministerio das Cidades / Caixa', 'Programas habitacionais, faixa de renda e contratos', 'Requer autorizacao e consentimento', FALSE, 'Requer convenio')
+  ('cnpj', 'Receita Federal / bases publicas espelhadas', 'Dados cadastrais publicos de pessoa juridica', 'Consulta publica por BrasilAPI/ReceitaWS no prototipo; API oficial em producao mediante autorizacao institucional.', TRUE, 'API publica ativa'),
+  ('cep', 'Correios / ViaCEP', 'Endereco publico por CEP', 'Consulta publica sem dados pessoais sensiveis, com cache local auditavel.', TRUE, 'API publica ativa'),
+  ('sus', 'Ministerio da Saude / Conecte SUS', 'Vacinas, consultas, medicamentos e cartao SUS', 'Integracao preparada para OAuth gov.br, consentimento do titular, trilha de auditoria e API autorizada.', FALSE, 'Preparado para convenio'),
+  ('cnh', 'SENATRAN / DETRANs', 'CNH, pontuacao, multas e validade', 'Integracao preparada para autenticacao forte, consentimento e acesso oficial SENATRAN/DETRAN.', FALSE, 'Preparado para convenio'),
+  ('clt', 'Ministerio do Trabalho / Carteira de Trabalho Digital', 'Contratos, vinculos, salarios e beneficios trabalhistas', 'Integracao preparada para gov.br, autorizacao do titular e consulta oficial trabalhista.', FALSE, 'Preparado para convenio'),
+  ('seguro_desemprego', 'Ministerio do Trabalho', 'Solicitacoes, parcelas e situacao do seguro-desemprego', 'Integracao preparada para gov.br, consentimento e API oficial do Ministerio do Trabalho.', FALSE, 'Preparado para convenio'),
+  ('titulo_eleitor', 'Tribunal Superior Eleitoral', 'Situacao eleitoral, zona, secao e quitacao', 'Integracao preparada para validacao oficial do eleitor, consentimento e API autorizada do TSE.', FALSE, 'Preparado para convenio'),
+  ('habitacao', 'Ministerio das Cidades / Caixa', 'Programas habitacionais, faixa de renda e contratos', 'Integracao preparada para consentimento, validacao cadastral e consulta oficial de programas habitacionais.', FALSE, 'Preparado para convenio')
 ON DUPLICATE KEY UPDATE
   agency = VALUES(agency),
   data_scope = VALUES(data_scope),

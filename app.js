@@ -1,8 +1,11 @@
 const api = {
-  token: localStorage.getItem("conectagov_token"),
-  user: JSON.parse(localStorage.getItem("conectagov_user") || "null"),
+  token: null,
+  user: null,
   events: null,
 };
+
+localStorage.removeItem("conectagov_token");
+localStorage.removeItem("conectagov_user");
 
 const fallbackServices = [
   {
@@ -169,10 +172,27 @@ async function request(path, options = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.message || "Falha ao comunicar com o servidor.");
+    const error = new Error(data?.message || "Falha ao comunicar com o servidor.");
+    error.status = response.status;
+
+    if (response.status === 401) {
+      clearSession("Sua sessao expirou. Entre novamente para ver seus documentos.");
+    }
+
+    throw error;
   }
 
   return data;
+}
+
+function renderGuestRecords(message = "Entre com CPF para carregar seus documentos e registros.") {
+  recordsGrid.innerHTML = `
+    <article>
+      <span class="record-icon">CPF</span>
+      <h3>Aguardando login</h3>
+      <p>${message}</p>
+    </article>
+  `;
 }
 
 function renderServices(category = "todos") {
@@ -230,8 +250,20 @@ function renderAccount() {
     <p>CPF ${api.user.cpf} - nivel gov.br ${api.user.govbrLevel}. Dados sincronizados com MySQL/MariaDB.</p>
     <button class="ghost-button" type="button" id="logoutButton">Sair</button>
   `;
-  openLogin.textContent = api.user.fullName.split(" ")[0];
+  openLogin.textContent = "Sair";
   document.querySelector("#logoutButton").addEventListener("click", logout);
+}
+
+function showLoginScreen(message = "") {
+  document.body.classList.add("auth-only");
+  document.body.classList.remove("app-ready");
+  loginMessage.textContent = message;
+}
+
+function showAppScreen() {
+  document.body.classList.remove("auth-only");
+  document.body.classList.add("app-ready");
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function setAuthMode(mode) {
@@ -257,12 +289,13 @@ function renderRecords(records) {
     recordsGrid.innerHTML = `
       <article>
         <span class="record-icon">CPF</span>
-        <h3>Nenhum registro</h3>
-        <p>O banco ainda nao possui documentos vinculados a este usuario.</p>
+        <h3>Erro ao carregar</h3>
+        <p>${api.token ? "Nenhum registro retornado pelo backend para este CPF." : "Entre com CPF para carregar seus documentos."}</p>
       </article>
     `;
     return;
   }
+
 
   recordsGrid.innerHTML = records
     .map(
@@ -348,17 +381,216 @@ function getServiceAction(service) {
   };
 }
 
+function getRecordByKeys(keys) {
+  return currentRecords.find((record) =>
+    keys.some((key) => normalize(record.service_key).includes(key) || normalize(record.title).includes(key)),
+  );
+}
+
+function parsePayload(record) {
+  if (!record?.payload) {
+    return {};
+  }
+
+  if (typeof record.payload === "object") {
+    return record.payload;
+  }
+
+  try {
+    return JSON.parse(record.payload);
+  } catch (_error) {
+    return {};
+  }
+}
+
+function makeDetailRows(service) {
+  const title = normalize(service.title);
+
+  if (title.includes("cnh")) {
+    const record = getRecordByKeys(["cnh"]);
+    const payload = parsePayload(record);
+    return {
+      source: "Registro do CPF logado / conector SENATRAN-DETRAN preparado",
+      rows: [
+        ["Documento", "Carteira Nacional de Habilitacao"],
+        ["Situacao", record?.status || "Aguardando login gov.br"],
+        ["Categoria", payload.categoria || "B"],
+        ["Pontuacao", payload.pontos !== undefined ? `${payload.pontos} pontos` : "Disponivel apos sincronizacao"],
+        ["Validade", record?.summary || "Disponivel apos integracao oficial"],
+        ["Origem", "Base local do projeto; dados reais exigem API oficial"],
+      ],
+    };
+  }
+
+  if (title.includes("sus")) {
+    const record = getRecordByKeys(["sus", "cartao sus"]);
+    const payload = parsePayload(record);
+    return {
+      source: "Registro do CPF logado / Conecte SUS preparado",
+      rows: [
+        ["Documento", "Cartao Nacional de Saude"],
+        ["Situacao", record?.status || "Aguardando gov.br"],
+        ["Vacinas registradas", payload.vacinas ?? "Disponivel apos autorizacao"],
+        ["Consultas recentes", payload.consultas ?? "Disponivel apos autorizacao"],
+        ["Resumo", record?.summary || "Sincronizacao real depende do Ministerio da Saude"],
+        ["Origem", "Base local do projeto; dados reais exigem consentimento"],
+      ],
+    };
+  }
+
+  if (title.includes("carteira") || title.includes("clt")) {
+    const record = getRecordByKeys(["clt", "carteira"]);
+    const payload = parsePayload(record);
+    return {
+      source: "Registro do CPF logado / Carteira de Trabalho Digital preparada",
+      rows: [
+        ["Modulo", "Carteira de Trabalho"],
+        ["Situacao", record?.status || "Aguardando gov.br"],
+        ["Contratos", payload.contratos ?? "Disponivel apos autorizacao"],
+        ["Ultimo vinculo", record?.summary || "Disponivel apos integracao oficial"],
+        ["FGTS e beneficios", "Conector preparado"],
+        ["Origem", "Base local do projeto; dados reais exigem gov.br"],
+      ],
+    };
+  }
+
+  if (title.includes("imposto") || title.includes("tributo") || title.includes("nota")) {
+    const record = getRecordByKeys(["irpf", "imposto"]);
+    const payload = parsePayload(record);
+    return {
+      source: "Registro do CPF logado / Receita Federal preparada",
+      rows: [
+        ["Modulo", title.includes("nota") ? "Notas e Tributos" : "Imposto de Renda"],
+        ["Situacao", record?.status || service.status],
+        ["Ano-base", payload.ano || "Disponivel apos autorizacao"],
+        ["Declaracao", record?.summary || "Consulta oficial depende da Receita Federal"],
+        ["Restituicao", "Conector preparado"],
+        ["Origem", "Base local do projeto; dados reais exigem e-CAC/gov.br"],
+      ],
+    };
+  }
+
+  if (title.includes("cnpj")) {
+    return {
+      source: "APIs publicas reais: BrasilAPI/ReceitaWS com cache MySQL",
+      rows: [
+        ["Servico", "Consulta cadastral de pessoa juridica"],
+        ["Entrada", "CNPJ com 14 digitos"],
+        ["Dados exibidos", "Razao social, fantasia, situacao, atividade, cidade e UF"],
+        ["Validacao", "Digitos verificadores do CNPJ"],
+        ["Persistencia", "Tabela cnpj_cache no MySQL"],
+        ["Exemplo testado", "33.000.167/0001-01 - Petrobras"],
+      ],
+    };
+  }
+
+  if (title.includes("cep")) {
+    return {
+      source: "API publica real ViaCEP com cache MySQL",
+      rows: [
+        ["Servico", "Consulta de endereco por CEP"],
+        ["Entrada", "CEP com 8 digitos"],
+        ["Dados exibidos", "Logradouro, bairro, cidade, UF e origem"],
+        ["CEP existente", "Exibe endereco real"],
+        ["CEP inexistente", "Mostra mensagem de nao encontrado"],
+        ["Exemplo testado", "01001-000 - Praca da Se, Sao Paulo/SP"],
+      ],
+    };
+  }
+
+  if (title.includes("seguro")) {
+    const record = getRecordByKeys(["seguro"]);
+    const payload = parsePayload(record);
+    return {
+      source: "Registro do CPF logado / Ministerio do Trabalho preparado",
+      rows: [
+        ["Servico", "Seguro-Desemprego"],
+        ["Situacao", record?.status || "Aguardando gov.br"],
+        ["Parcelas", payload.parcelas ?? "Disponivel apos autorizacao"],
+        ["Resumo", record?.summary || "Nenhuma consulta oficial sincronizada"],
+        ["Calendario", "Conector preparado"],
+        ["Origem", "Dados reais exigem gov.br e API oficial"],
+      ],
+    };
+  }
+
+  if (title.includes("habitacao")) {
+    const record = getRecordByKeys(["habitacao"]);
+    const payload = parsePayload(record);
+    return {
+      source: "Registro do CPF logado / conector habitacional preparado",
+      rows: [
+        ["Servico", "Habitacao Popular"],
+        ["Situacao", record?.status || "Cadastrado"],
+        ["Faixa", payload.faixa || "A calcular"],
+        ["Resumo", record?.summary || "Perfil local pronto para analise"],
+        ["Integracao", "Ministerio das Cidades / Caixa"],
+        ["Origem", "Base local do projeto"],
+      ],
+    };
+  }
+
+  if (title.includes("titulo")) {
+    const record = getRecordByKeys(["titulo"]);
+    const payload = parsePayload(record);
+    return {
+      source: "Registro do CPF logado / TSE preparado",
+      rows: [
+        ["Documento", "Titulo de Eleitor"],
+        ["Situacao", record?.status || "Aguardando convenio"],
+        ["Zona", payload.zona || "Disponivel apos integracao"],
+        ["Secao", payload.secao || "Disponivel apos integracao"],
+        ["Quitacao eleitoral", record?.summary || "Consulta oficial depende do TSE"],
+        ["Origem", "Base local do projeto; dados reais exigem API autorizada"],
+      ],
+    };
+  }
+
+  if (title.includes("cadunico") || title.includes("beneficio")) {
+    const record = getRecordByKeys(["cadunico", "beneficio"]);
+    const payload = parsePayload(record);
+    return {
+      source: "Registro do CPF logado / CadUnico preparado",
+      rows: [
+        ["Servico", service.title],
+        ["Situacao", record?.status || service.status],
+        ["NIS", payload.nis || "Disponivel apos autorizacao"],
+        ["Resumo", record?.summary || service.description],
+        ["Beneficios", "Bolsa Familia, BPC e auxilios preparados"],
+        ["Origem", "Base local do projeto; dados reais exigem autorizacao"],
+      ],
+    };
+  }
+
+  return {
+    source: "Catalogo de servicos no MySQL",
+    rows: [
+      ["Servico", service.title],
+      ["Categoria", service.category],
+      ["Situacao", service.status],
+      ["Descricao", service.description],
+      ["Ultima sincronizacao", service.last_sync_at || "Nao informada"],
+      ["Origem", "Tabela services"],
+    ],
+  };
+}
+
 function renderServiceWorkspace(service) {
   const action = getServiceAction(service);
+  const details = makeDetailRows(service);
   const relatedRecords = currentRecords.filter((record) => {
     const title = normalize(service.title);
     return title.includes(normalize(record.title).split(" ")[0]) || normalize(record.title).includes(title.split(" ")[0]);
   });
 
   serviceWorkspace.innerHTML = `
-    <span class="service-kind">${action.type === "public-api" ? "API publica real" : "Servico autenticado"}</span>
+    <span class="service-kind">${action.type === "public-api" ? "API publica real" : action.type === "protected" ? "Dados protegidos" : "Conector"}</span>
     <h3>${service.title}</h3>
     <p>${action.text}</p>
+    <div class="detail-table" aria-label="Dados do servico ${service.title}">
+      ${details.rows.map(([label, value]) => `<div><strong>${label}</strong><span>${value}</span></div>`).join("")}
+    </div>
+    <p class="detail-source">Fonte: ${details.source}</p>
     <div class="workspace-actions">
       <button type="button" data-scroll-target="${action.target}">${action.primaryLabel}</button>
       <button type="button" data-scroll-target="#integracoes">Ver requisito tecnico</button>
@@ -367,12 +599,15 @@ function renderServiceWorkspace(service) {
       ${
         relatedRecords.length
           ? relatedRecords
-              .map((record) => `<strong>${record.title}</strong><span>${record.status} - ${record.summary}</span>`)
+              .map(
+                (record) => `<div class="record-line"><strong>${record.title}</strong><span class="muted">${record.status}</span><p class="record-summary">${record.summary}</p></div>`,
+              )
               .join("")
           : "<span>Nenhum registro especifico carregado para este servico ainda.</span>"
       }
     </div>
   `;
+
 
   serviceWorkspace.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -392,16 +627,46 @@ function renderIntegrations(integrations) {
     return;
   }
 
+  const names = {
+    cep: "Consulta de CEP",
+    cnpj: "Consulta de CNPJ",
+    sus: "Cartao SUS",
+    cnh: "CNH Digital",
+    clt: "Carteira de Trabalho",
+    seguro_desemprego: "Seguro-Desemprego",
+    titulo_eleitor: "Titulo de Eleitor",
+    habitacao: "Habitacao Popular",
+  };
+
   integrationGrid.innerHTML = integrations
     .map(
       (integration) => `
         <article>
-          <span class="integration-status ${integration.public_api_available ? "public" : "protected"}">
-            ${integration.status}
-          </span>
-          <h3>${integration.agency}</h3>
-          <p>${integration.data_scope}</p>
-          <small>${integration.access_model}</small>
+          <div class="integration-card-header">
+            <span class="integration-status ${integration.public_api_available ? "public" : "protected"}">
+              ${integration.status}
+            </span>
+            <span class="integration-compliance">LGPD</span>
+          </div>
+          <h3>${names[integration.service_key] || integration.service_key}</h3>
+          <dl class="integration-meta">
+            <div>
+              <dt>Orgao responsavel</dt>
+              <dd>${integration.agency}</dd>
+            </div>
+            <div>
+              <dt>Escopo dos dados</dt>
+              <dd>${integration.data_scope}</dd>
+            </div>
+            <div>
+              <dt>Modelo de acesso</dt>
+              <dd>${integration.access_model}</dd>
+            </div>
+            <div>
+              <dt>Situacao tecnica</dt>
+              <dd>${integration.public_api_available ? "Operacional no prototipo com dados publicos." : "Conector regularizado para ambiente oficial autorizado."}</dd>
+            </div>
+          </dl>
         </article>
       `,
     )
@@ -442,6 +707,7 @@ async function loadIntegrations() {
 
 async function loadRecords() {
   if (!api.token) {
+    renderGuestRecords();
     return;
   }
 
@@ -450,6 +716,11 @@ async function loadRecords() {
     currentRecords = records;
     renderRecords(records);
   } catch (error) {
+    if (error.status === 401) {
+      renderGuestRecords("Sua sessao expirou. Faca login novamente para carregar os documentos.");
+      return;
+    }
+
     recordsGrid.innerHTML = `
       <article>
         <span class="record-icon">CPF</span>
@@ -478,8 +749,33 @@ function connectRealtime() {
   });
 
   api.events.onerror = () => {
-    liveStrip.textContent = "Conexao em tempo real tentando reconectar...";
+    liveStrip.textContent = "Tempo real indisponivel. Entre novamente se a sessao tiver expirado.";
   };
+}
+
+async function validateSession() {
+  if (!api.token) {
+    clearSession();
+    return false;
+  }
+
+  try {
+    const user = await request("/api/me");
+    api.user = {
+      id: user.id,
+      cpf: user.cpf,
+      fullName: user.full_name,
+      email: user.email,
+      govbrLevel: user.govbr_level,
+    };
+    renderAccount();
+    return true;
+  } catch (error) {
+    if (error.status !== 401) {
+      liveStrip.textContent = "Nao foi possivel validar a sessao agora.";
+    }
+    return false;
+  }
 }
 
 async function login(event) {
@@ -513,20 +809,20 @@ async function login(event) {
 
     api.token = data.token;
     api.user = data.user;
-    localStorage.setItem("conectagov_token", api.token);
-    localStorage.setItem("conectagov_user", JSON.stringify(api.user));
-    loginMessage.textContent =
+    const successMessage =
       authMode === "register" ? "CPF cadastrado e painel carregado." : "Login realizado com sucesso.";
     setAuthMode("login");
+    loginMessage.textContent = successMessage;
     renderAccount();
     await loadRecords();
     connectRealtime();
+    showAppScreen();
   } catch (error) {
     loginMessage.textContent = error.message;
   }
 }
 
-function logout() {
+function clearSession(message = "") {
   api.token = null;
   api.user = null;
   localStorage.removeItem("conectagov_token");
@@ -538,9 +834,13 @@ function logout() {
   }
 
   liveStrip.textContent = "Backend aguardando login para sincronizacao em tempo real.";
-  loginMessage.textContent = "";
   renderAccount();
-  renderRecords([]);
+  renderGuestRecords(message || "Entre com CPF para carregar seus documentos e registros.");
+  showLoginScreen(message);
+}
+
+function logout() {
+  clearSession("");
 }
 
 async function searchCnpj(cnpj) {
@@ -625,7 +925,12 @@ cepInput?.addEventListener("input", (event) => {
 });
 
 openLogin.addEventListener("click", () => {
-  document.querySelector("#loginPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (api.user) {
+    logout();
+    return;
+  }
+
+  showLoginScreen();
 });
 
 loginModeButton.addEventListener("click", () => setAuthMode("login"));
@@ -643,9 +948,12 @@ cepForm?.addEventListener("submit", (event) => {
   searchCep(cepInput.value);
 });
 
-renderAccount();
-setAuthMode("login");
-loadServices();
-loadIntegrations();
-loadRecords();
-connectRealtime();
+async function initApp() {
+  showLoginScreen();
+  renderAccount();
+  setAuthMode("login");
+  renderGuestRecords();
+  await Promise.all([loadServices(), loadIntegrations()]);
+}
+
+initApp();
